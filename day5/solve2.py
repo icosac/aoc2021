@@ -4,7 +4,7 @@ class Map:
         self.maxX=0
         self.maxY=0
 
-    def add_line(self, x1, y1, x2, y2):
+    def add_line(self, x1, y1, x2, y2, diagonal=False):
         self.maxX=x1+1 if self.maxX<x1+1 else self.maxX
         self.maxX=x2+1 if self.maxX<x2+1 else self.maxX
         self.maxY=y1+1 if self.maxY<y1+1 else self.maxY
@@ -12,17 +12,47 @@ class Map:
 
         self.enlarge()
 
-        Ax=min(x1, x2)
-        Bx=max(x1, x2)
-        Ay=min(y1, y2)
-        By=max(y1, y2)
-        for x in range(Ax, Bx+1):
-            for y in range(Ay, By+1):
-                #print(x,y)
+        if not(diagonal):
+            Ax=min(x1, x2)
+            Bx=max(x1, x2)
+            Ay=min(y1, y2)
+            By=max(y1, y2)
+            for x in range(Ax, Bx+1):
+                for y in range(Ay, By+1):
+                    #print(x,y)
+                    try:
+                        self.map[x][y]+=1
+                    except Exception as e:
+                        print(e, x, y, 
+                              "\nFrom: (", x1, y1, ") to: (", x2, y2, ")", 
+                              "\nmax: (", self.maxX, self.maxY, ")", 
+                              "\nlen: (", len(self.map), len(self.map[0]), ")",
+                              "\nDiagonal: ", diagonal
+                              )
+        else:
+            if x1>x2:
+                Ax=x2
+                Ay=y2
+                Bx=x1
+                By=y1
+            else:
+                Ax=x1
+                Ay=y1
+                Bx=x2
+                By=y2
+            y=Ay
+            for x in range(Ax, Bx+1):
                 try:
                     self.map[x][y]+=1
                 except Exception as e:
-                    print(e, x, y, "\nFrom: (", x1, y1, ") to: (", x2, y2, ")", "\nmax: (", self.maxX, self.maxY, ")", "\nlen: (", len(self.map), len(self.map[0]), ")")
+                    print(e, x, y, 
+                          "\nFrom: (", x1, y1, ") to: (", x2, y2, ")", 
+                          "\nmax: (", self.maxX, self.maxY, ")", 
+                          "\nlen: (", len(self.map), len(self.map[0]), ")",
+                          "\nDiagonal: ", diagonal
+                          )
+                y=y+1 if By>Ay else y-1
+
 
     def enlarge(self):
         if len(self.map)!=self.maxX:
@@ -69,15 +99,11 @@ def main():
             x2=int(finalPoint.split(',')[0])
             y2=int(finalPoint.split(',')[1])
             if x1==x2 or y1==y2:
-                #print(x1, y1, x2, y2)
                 M.add_line(x1, y1, x2, y2)
-                #print(M)
-            #minCoord[0]=x1 if x1<minCoord[-1] else minCoord[0]
-            #minCoord[1]=y1 if y1<minCoord[1] else minCoord[1]
-            #maxCoord[0]=x2 if x2>maxCoord[0] else maxCoord[0]
-            #maxCoord[1]=y2 if y2>maxCoord[1] else maxCoord[1]
-
-            #lines.append({"A" : (x1, y1), "B" : (x2, y2)})
+            else:
+                M.add_line(x1, y1, x2, y2, True)
+    if M.maxX<20:
+        print(M)
     print(M.final_value())
 
 if __name__=="__main__":
