@@ -100,8 +100,8 @@ def main():
           direction=0 if "y=" in line.split("\n")[0] else 1
           where=int(line.split("\n")[0].split("=")[1])
           instructions.fold(direction, where)
-          break          
 
+  print(instructions)
   print(instructions.count_dots())
 
 if __name__=="__main__":
