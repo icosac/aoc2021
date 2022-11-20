@@ -45,6 +45,10 @@ class Node:
     def __ge__(self, other):
         return self.distance<other.distance or self.distance==other.distance
 
+    def __iter__(self):
+        yield self.distance
+        yield self
+
 def print_graph(graph, sol=list(), distances=False):
     for i in range(len(graph)):
         if graph[i] in sol:
@@ -102,25 +106,148 @@ def neighbors(node, graph):
         neighs.append(graph[pos+sizeY])
     return neighs
 
+from math import log2
+class MyPriorityQueue:
+    def __init__(self, lst=list()) -> None:
+        self.elements=lst
+    
+    def __len__(self):
+        return len(self.elements)
+
+    def push(self, element):
+        prev_len=len(self)
+        found=False
+
+        print("inserting {} in <{}> {}".format(element, self, found))
+        if len(self.elements)==0:
+            self.elements.append(element)
+            found=True
+        print("inserting {} in <{}> {}".format(element, self, found))
+        if not(found) and (element.distance>self.elements[-1].distance or element.distance==self.elements[-1].distance):
+            self.elements.append(element)
+            found=True
+        print("inserting {} in <{}> {}".format(element, self, found))
+        if not(found) and (element.distance<self.elements[0].distance or element.distance==self.elements[0].distance):
+            self.elements.insert(0, element) #if element>self.elements[0], then the first if is true and is dealt there
+            found=True
+        print("inserting {} in <{}> {}".format(element, self, found))
+        if not(found) and len(self.elements)==2:
+            self.elements.insert(1, element)
+            found=True
+        print("inserting {} in <{}> {}".format(element, self, found))
+        
+
+        pos=int(len(self.elements)/2)
+        incr=pos
+        print("inserting {} in <{}> {}".format(element, self, found))
+        while not(found) and incr!=0:
+            incr=int(incr/2)
+            print("Checking pos {} len {} el {} queue <{}>".format(pos, len(self), element, self))
+            if self.elements[pos].distance==element.distance:
+                self.elements.insert(pos, element)
+                found=True
+            elif (self.elements[pos].distance<element.distance and
+                    self.elements[pos+1].distance>element.distance):
+                self.elements.insert(pos+1, element)
+                found=True
+            elif (self.elements[pos].distance>element.distance and
+                    self.elements[pos+1].distance<element.distance):
+                pos+=incr
+            else:
+                pos-=incr
+
+        print()
+        if len(self.elements)!=(prev_len+1):
+            raise Exception("Push did not push anything")
+
+    def pop(self):
+        if len(self)>0:
+            element=self.elements[0]
+            self.elements=self.elements[1:]
+            return element
+        else:
+            raise Exception("PriorityQueue is empty")
+
+    def __str__(self):
+        ret=""
+        for element in self.elements:
+            ret+=str(element)+", "
+        return ret
+
+    def __iter__(self):
+        yield self.elements
+
+    def find(self, element):
+        if len(self)==0:
+            return -1
+            
+        # if self.elements[0]==element:
+        #     return 0
+        # elif self.elements[-1]==element:
+        #     return len(self)-1
+
+        found=False
+        pos=int(len(self)/2)
+        incr=pos
+        try:
+            while incr!=0:
+                if pos<len(self):
+                    if self.elements[pos]==element:
+                        return pos
+                    elif self.elements[pos]<element:
+                        pos+=incr
+                    else:
+                        pos-=incr
+                    incr=int(incr/2)
+                else:
+                    pos-=incr
+                    incr=int(incr/2)
+            if self.elements[pos]==element:
+                return pos
+            else:
+                return -1
+        except Exception as E:
+            print(E, pos, len(self))
+            raise E
+
+    def remove(self, element):
+        pos=self.find(element)
+        if pos==-1:
+            raise Exception("Value not in queue {}".format(pos))
+        elif pos==0:
+            self.elements=self.elements[1:]
+        elif pos==len(self)-1:
+            self.elements=self.elements[:-1]
+        else:
+            self.elements=self.elements[:pos]+self.elements[pos+1:]
+
+    def __contains__(self, element):
+        return self.find(element)!=-1
+
+
+
 
 def a_star(graph):
-    open=[graph[0]]
+    open=MyPriorityQueue([graph[0]])
     closed=list()
-    best=min(open)
+    best=open.pop()
     while best!=graph[-1]:
         closed.append(best)
         for neighbor in neighbors(best, graph):
             cost=best.distance+neighbor.value
             if neighbor in open and cost<neighbor.distance:
-                open.remove(neighbor)
+                print((neighbor in open), neighbor, open)
+                try:
+                    open.remove(neighbor)
+                except Exception as E:
+                    print(E)
             if neighbor in closed and cost<neighbor.distance:
                 closed.remove(neighbor)
             if neighbor not in closed and neighbor not in open:
                 neighbor.distance=cost
-                open.append(neighbor)
+                open.push(neighbor)
                 neighbor.parent=best
-        open.remove(best)
-        best=min(open)
+        best=open.pop()
     
     nodes=[graph[-1]]
     while nodes[-1]!=graph[0]:
@@ -172,7 +299,7 @@ def main():
     global sizeX
 
     graph=list()
-    with open("input.txt", "r") as f:
+    with open("input2.txt", "r") as f:
         i=0
         for line in f:
             j=0
@@ -184,7 +311,17 @@ def main():
         sizeX=i
         
     graph[0].distance=0
-    a_star(graph)
+
+    max=5
+    for n in range(max):
+        graph[n].distance=n
+    a=MyPriorityQueue(graph[:max])
+    print(a)
+    for n in range(max):
+        print(graph[n] in a)
+    print(graph[max] in a)
+    
+    #a_star(graph)
     # dijkstra(graph)
     # find_shortest(graph)
 
